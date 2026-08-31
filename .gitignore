@@ -1,0 +1,9 @@
+/dist/
+/upstream/
+/build/
+*.dll
+*.so
+*.a
+*.h
+*.zip
+*.tar.gz

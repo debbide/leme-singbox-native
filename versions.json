@@ -1,0 +1,17 @@
+{
+  "runtimeVersion": "1.14.0-r1-dev",
+  "abiVersion": 1,
+  "singBoxVersion": "1.14.0",
+  "singBoxTag": "v1.14.0",
+  "singBoxCommit": "0b8995879f29a9b98ee027bc17b75e101445b238",
+  "goVersion": "1.25.5",
+  "buildTags": [
+    "with_gvisor",
+    "with_quic",
+    "with_wireguard",
+    "with_utls",
+    "with_clash_api",
+    "badlinkname",
+    "tfogo_checklinkname0"
+  ]
+}

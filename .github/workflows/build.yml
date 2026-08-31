@@ -1,0 +1,63 @@
+name: build-native
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: win32-x64
+            runner: windows-latest
+            target_os: windows
+            target_arch: amd64
+          - name: linux-x64
+            runner: ubuntu-24.04
+            target_os: linux
+            target_arch: amd64
+          - name: linux-arm64
+            runner: ubuntu-24.04-arm
+            target_os: linux
+            target_arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.5'
+          cache: true
+      - name: Fetch pinned sing-box source
+        shell: bash
+        run: ./scripts/fetch-upstream.sh
+      - name: Install Windows compiler
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install mingw --no-progress -y
+      - name: Build
+        shell: bash
+        env:
+          TARGET_OS: ${{ matrix.target_os }}
+          TARGET_ARCH: ${{ matrix.target_arch }}
+        run: ./scripts/build.sh
+      - name: Inspect Linux artifact
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          file dist/${{ matrix.target_os }}-${{ matrix.target_arch }}/libleme-singbox.so
+          readelf -h dist/${{ matrix.target_os }}-${{ matrix.target_arch }}/libleme-singbox.so
+          nm -D --defined-only dist/${{ matrix.target_os }}-${{ matrix.target_arch }}/libleme-singbox.so | grep leme_core_
+      - name: Inspect Windows artifact
+        if: runner.os == 'Windows'
+        shell: bash
+        run: objdump -p dist/windows-amd64/leme-singbox.dll | grep leme_core_
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leme-singbox-${{ matrix.name }}
+          path: dist/${{ matrix.target_os }}-${{ matrix.target_arch }}/
+          if-no-files-found: error
