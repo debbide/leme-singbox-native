@@ -90,14 +90,17 @@ jobs:
           name: leme-singbox-linux-arm64
           path: release/linux-arm64
 
-      - name: Package release archives
+      - name: Prepare direct release files
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p release/packages
-          (cd release/win32-x64 && zip -9 -r ../packages/leme-singbox-win32-x64.zip .)
-          tar -C release/linux-x64 -czf release/packages/leme-singbox-linux-x64.tar.gz .
-          tar -C release/linux-arm64 -czf release/packages/leme-singbox-linux-arm64.tar.gz .
+          cp release/win32-x64/leme-singbox.dll release/packages/leme-singbox-win32-x64.dll
+          cp release/win32-x64/leme-singbox.h release/packages/leme-singbox-win32-x64.h
+          cp release/linux-x64/libleme-singbox.so release/packages/libleme-singbox-linux-x64.so
+          cp release/linux-x64/leme-singbox.h release/packages/leme-singbox-linux-x64.h
+          cp release/linux-arm64/libleme-singbox.so release/packages/libleme-singbox-linux-arm64.so
+          cp release/linux-arm64/leme-singbox.h release/packages/leme-singbox-linux-arm64.h
 
       - name: Generate manifest and checksums
         shell: bash
@@ -107,9 +110,12 @@ jobs:
           (
             cd release/packages
             sha256sum \
-              leme-singbox-win32-x64.zip \
-              leme-singbox-linux-x64.tar.gz \
-              leme-singbox-linux-arm64.tar.gz \
+              leme-singbox-win32-x64.dll \
+              leme-singbox-win32-x64.h \
+              libleme-singbox-linux-x64.so \
+              leme-singbox-linux-x64.h \
+              libleme-singbox-linux-arm64.so \
+              leme-singbox-linux-arm64.h \
               manifest.json > checksums.txt
           )
 
@@ -120,8 +126,11 @@ jobs:
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            release/packages/leme-singbox-win32-x64.zip
-            release/packages/leme-singbox-linux-x64.tar.gz
-            release/packages/leme-singbox-linux-arm64.tar.gz
+            release/packages/leme-singbox-win32-x64.dll
+            release/packages/leme-singbox-win32-x64.h
+            release/packages/libleme-singbox-linux-x64.so
+            release/packages/leme-singbox-linux-x64.h
+            release/packages/libleme-singbox-linux-arm64.so
+            release/packages/leme-singbox-linux-arm64.h
             release/packages/checksums.txt
             release/packages/manifest.json
