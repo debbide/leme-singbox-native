@@ -35,6 +35,9 @@ jobs:
         with:
           go-version: '1.25.5'
           cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Install pinned garble
         shell: bash
         run: |
@@ -53,6 +56,34 @@ jobs:
           TARGET_OS: ${{ matrix.target_os }}
           TARGET_ARCH: ${{ matrix.target_arch }}
         run: ./scripts/build.sh
+      - name: Build Node-API addon
+        shell: bash
+        run: npx --yes node-gyp rebuild --directory addon
+      - name: Copy Node-API addon into artifact
+        shell: bash
+        run: cp addon/build/Release/leme_native.node dist/${{ matrix.target_os }}-${{ matrix.target_arch }}/leme_native.node
+      - name: Run Linux C ABI lifecycle smoke test
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          gcc tests/smoke.c \
+            -I dist/${{ matrix.target_os }}-${{ matrix.target_arch }} \
+            -L dist/${{ matrix.target_os }}-${{ matrix.target_arch }} \
+            -Wl,-rpath,"$PWD/dist/${{ matrix.target_os }}-${{ matrix.target_arch }}" \
+            -l:libleme-singbox.so \
+            -o dist/${{ matrix.target_os }}-${{ matrix.target_arch }}/smoke
+          dist/${{ matrix.target_os }}-${{ matrix.target_arch }}/smoke
+      - name: Run Windows C ABI lifecycle smoke test
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          gcc tests/smoke.c \
+            -I dist/windows-amd64 \
+            -L dist/windows-amd64 \
+            -lleme-singbox \
+            -o dist/windows-amd64/smoke.exe
+          cp dist/windows-amd64/leme-singbox.dll .
+          dist/windows-amd64/smoke.exe
       - name: Inspect Linux artifact
         if: runner.os == 'Linux'
         shell: bash
@@ -102,10 +133,13 @@ jobs:
           mkdir -p release/packages
           cp release/win32-x64/leme-singbox.dll release/packages/leme-singbox-win32-x64.dll
           cp release/win32-x64/leme-singbox.h release/packages/leme-singbox-win32-x64.h
+          cp release/win32-x64/leme_native.node release/packages/leme-native-win32-x64.node
           cp release/linux-x64/libleme-singbox.so release/packages/libleme-singbox-linux-x64.so
           cp release/linux-x64/leme-singbox.h release/packages/leme-singbox-linux-x64.h
+          cp release/linux-x64/leme_native.node release/packages/leme-native-linux-x64.node
           cp release/linux-arm64/libleme-singbox.so release/packages/libleme-singbox-linux-arm64.so
           cp release/linux-arm64/leme-singbox.h release/packages/leme-singbox-linux-arm64.h
+          cp release/linux-arm64/leme_native.node release/packages/leme-native-linux-arm64.node
 
       - name: Generate manifest and checksums
         shell: bash
@@ -117,10 +151,13 @@ jobs:
             sha256sum \
               leme-singbox-win32-x64.dll \
               leme-singbox-win32-x64.h \
+              leme-native-win32-x64.node \
               libleme-singbox-linux-x64.so \
               leme-singbox-linux-x64.h \
+              leme-native-linux-x64.node \
               libleme-singbox-linux-arm64.so \
               leme-singbox-linux-arm64.h \
+              leme-native-linux-arm64.node \
               manifest.json > checksums.txt
           )
 
@@ -133,9 +170,12 @@ jobs:
           files: |
             release/packages/leme-singbox-win32-x64.dll
             release/packages/leme-singbox-win32-x64.h
+            release/packages/leme-native-win32-x64.node
             release/packages/libleme-singbox-linux-x64.so
             release/packages/leme-singbox-linux-x64.h
+            release/packages/leme-native-linux-x64.node
             release/packages/libleme-singbox-linux-arm64.so
             release/packages/leme-singbox-linux-arm64.h
+            release/packages/leme-native-linux-arm64.node
             release/packages/checksums.txt
             release/packages/manifest.json

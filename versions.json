@@ -1,6 +1,6 @@
 {
   "runtimeVersion": "1.14.0-r4",
-  "abiVersion": 1,
+  "abiVersion": 2,
   "singBoxVersion": "1.14.0",
   "singBoxTag": "v1.14.0",
   "singBoxCommit": "0b8995879f29a9b98ee027bc17b75e101445b238",

@@ -1,9 +1,11 @@
 /dist/
 /upstream/
 /build/
+/addon/build/
 *.dll
 *.so
 *.a
 *.h
+*.node
 *.zip
 *.tar.gz

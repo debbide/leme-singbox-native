@@ -1,0 +1,9 @@
+{
+  "name": "@leme/native-core",
+  "private": true,
+  "version": "1.14.0-r4",
+  "gypfile": true,
+  "scripts": {
+    "build": "node-gyp rebuild"
+  }
+}
