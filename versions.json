@@ -1,5 +1,5 @@
 {
-  "runtimeVersion": "1.14.0-r1",
+  "runtimeVersion": "1.14.0-r3",
   "abiVersion": 1,
   "singBoxVersion": "1.14.0",
   "singBoxTag": "v1.14.0",
@@ -13,5 +13,10 @@
     "with_clash_api",
     "badlinkname",
     "tfogo_checklinkname0"
+  ],
+  "garbleVersion": "v0.15.0",
+  "garbleFlags": [
+    "-literals",
+    "-tiny"
   ]
 }
