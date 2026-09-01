@@ -1,5 +1,8 @@
 name: build-native
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -61,3 +64,64 @@ jobs:
           name: leme-singbox-${{ matrix.name }}
           path: dist/${{ matrix.target_os }}-${{ matrix.target_arch }}/
           if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Windows x64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: leme-singbox-win32-x64
+          path: release/win32-x64
+
+      - name: Download Linux x64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: leme-singbox-linux-x64
+          path: release/linux-x64
+
+      - name: Download Linux ARM64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: leme-singbox-linux-arm64
+          path: release/linux-arm64
+
+      - name: Package release archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release/packages
+          (cd release/win32-x64 && zip -9 -r ../packages/leme-singbox-win32-x64.zip .)
+          tar -C release/linux-x64 -czf release/packages/leme-singbox-linux-x64.tar.gz .
+          tar -C release/linux-arm64 -czf release/packages/leme-singbox-linux-arm64.tar.gz .
+
+      - name: Generate manifest and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp versions.json release/packages/manifest.json
+          (
+            cd release/packages
+            sha256sum \
+              leme-singbox-win32-x64.zip \
+              leme-singbox-linux-x64.tar.gz \
+              leme-singbox-linux-arm64.tar.gz \
+              manifest.json > checksums.txt
+          )
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Leme sing-box Native ${{ github.ref_name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            release/packages/leme-singbox-win32-x64.zip
+            release/packages/leme-singbox-linux-x64.tar.gz
+            release/packages/leme-singbox-linux-arm64.tar.gz
+            release/packages/checksums.txt
+            release/packages/manifest.json
